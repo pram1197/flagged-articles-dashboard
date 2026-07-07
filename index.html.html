@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flagged Article Reviews Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(
+                135deg,
+                #0F172A 0%,
+                #1E293B 35%,
+                #111827 100%
+            );
+            background-attachment: fixed;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 60px,
+                    rgba(99, 102, 241, 0.03) 60px,
+                    rgba(99, 102, 241, 0.03) 120px
+                );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .accordion-content.active {
+            max-height: 3000px;
+            transition: max-height 0.5s ease-in;
+        }
+        
+        .rotate-180 {
+            transform: rotate(180deg);
+            transition: transform 0.3s ease;
+        }
+
+        .hover\:scale-105:hover {
+            transform: scale(1.05);
+        }
+
+        .hover\:scale-102:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="pb-8">
+    <div class="content-wrapper">
+        <div class="max-w-7xl mx-auto px-4 pt-8">
+            <!-- Header Section -->
+            <div class="glass-effect rounded-2xl p-8 mb-8 shadow-2xl">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-5xl">🚩</span>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        Flagged Article Reviews Dashboard
+                    </h1>
+                </div>
+                
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 p-4 rounded-xl mb-6 shadow-sm">
+                    <strong class="text-amber-900">⏰ SLA Policy:</strong>
+                    <span class="text-amber-800"> All flagged articles must be reviewed within 3 business days. Articles exceeding this timeframe are marked as HIGH priority and require immediate attention.</span>
+                </div>
+
+                <!-- Interactive Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 cursor-pointer transform" onclick="showAllArticles()">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="text-6xl font-black">10</div>
+                            <svg class="w-14 h-14 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold mb-1">Total Flagged Articles</div>
+                        <div class="text-xs opacity-80 bg-white bg-opacity-20 rounded-full px-3 py-1 inline-block">Click to view all</div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-amber-400 to-orange-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 cursor-pointer transform" onclick="filterPendingReview()">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="text-6xl font-black">1</div>
+                            <svg class="w-14 h-14 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold mb-1">Pending Review</div>
+                        <div class="text-xs opacity-80 bg-white bg-opacity-20 rounded-full px-3 py-1 inline-block">Click to filter</div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-red-500 to-pink-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 cursor-pointer transform" onclick="filterHighPriority()">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="text-6xl font-black">1</div>
+                            <svg class="w-14 h-14 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold mb-1">High Priority / Overdue</div>
+                        <div class="text-xs opacity-80 bg-white bg-opacity-20 rounded-full px-3 py-1 inline-block">Click to filter</div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 cursor-pointer transform" onclick="filterReviewed()">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="text-6xl font-black">9</div>
+                            <svg class="w-14 h-14 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold mb-1">Reviewed This Week</div>
+                        <div class="text-xs opacity-80 bg-white bg-opacity-20 rounded-full px-3 py-1 inline-block">Click to view</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="glass-effect rounded-2xl p-6 mb-8 shadow-xl">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl">🔍</span>
+                        <h2 class="text-2xl font-bold text-gray-800">Advanced Filters</h2>
+                    </div>
+                    <button onclick="clearFilters()" class="px-5 py-2.5 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all font-semibold text-sm shadow-md">
+                        Clear All Filters
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-gray-700 text-sm">Search by Title or ID</label>
+                        <input type="text" id="searchInput" placeholder="Enter article title or ID..." class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-indigo-500 focus:outline-none shadow-sm">
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-gray-700 text-sm">Category</label>
+                        <select id="categoryFilter" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-indigo-500 focus:outline-none shadow-sm">
+                            <option value="">All Categories</option>
+                            <option value="ES_EUC_Corporate_Apps">ES_EUC_Corporate_Apps</option>
+                            <option value="ES_EUC_Express">ES_EUC_Express</option>
+                            <option value="ES_EUC_UC">ES_EUC_UC</option>
+                            <option value="ES_EUC_PC_Support">ES_EUC_PC_Support</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-gray-700 text-sm">Priority Level</label>
+                        <select id="priorityFilter" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-indigo-500 focus:outline-none shadow-sm">
+                            <option value="">All Priorities</option>
+                            <option value="high">High (Overdue)</option>
+                            <option value="medium">Medium (Due Soon)</option>
+                            <option value="low">Low (Within SLA)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-gray-700 text-sm">Flagged Date</label>
+                        <input type="date" id="dateFilter" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-indigo-500 focus:outline-none shadow-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expandable Articles List Section -->
+            <div class="glass-effect rounded-2xl shadow-xl mb-8 overflow-hidden">
+                <div class="p-6 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border-b-2 border-indigo-200 cursor-pointer hover:from-indigo-100 hover:via-purple-100 hover:to-pink-100 transition-all" onclick="toggleArticlesList()">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-800">📋 Articles List</h2>
+                                <p class="text-sm text-gray-600 mt-1" id="articlesCount">Showing 10 articles</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-semibold text-indigo-600 hidden md:block">Click to expand/collapse</span>
+                            <svg id="articlesChevron" class="w-8 h-8 text-indigo-600 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="articlesAccordion" class="accordion-content">
+                    <div class="p-6 bg-white">
+                        <div id="articlesColumn" class="grid grid-cols-1 gap-4"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Insights and Article Details Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Article Details -->
+                <div class="glass-effect rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 pb-3 border-b-4 border-indigo-500">📄 Article Details</h2>
+                    <div id="articleDetails">
+                        <div class="text-center py-16">
+                            <div class="text-7xl mb-4">👈</div>
+                            <p class="text-gray-600 text-lg">Select an article from the list to view details</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Insights -->
+                <div class="glass-effect rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 pb-3 border-b-4 border-indigo-500">📊 Dashboard Insights</h2>
+                    
+                    <!-- Category Distribution -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <span class="text-2xl">📂</span> Category Distribution
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-l-4 border-blue-500 cursor-pointer hover:shadow-lg transition-all transform hover:scale-102" onclick="filterByCategory('ES_EUC_PC_Support')">
+                                <span class="font-semibold text-gray-700 text-sm">ES_EUC_PC_Support</span>
+                                <span class="font-bold text-blue-700 text-2xl">6</span>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-l-4 border-purple-500 cursor-pointer hover:shadow-lg transition-all transform hover:scale-102" onclick="filterByCategory('ES_EUC_UC')">
+                                <span class="font-semibold text-gray-700 text-sm">ES_EUC_UC</span>
+                                <span class="font-bold text-purple-700 text-2xl">2</span>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-l-4 border-green-500 cursor-pointer hover:shadow-lg transition-all transform hover:scale-102" onclick="filterByCategory('ES_EUC_Corporate_Apps')">
+                                <span class="font-semibold text-gray-700 text-sm">ES_EUC_Corporate_Apps</span>
+                                <span class="font-bold text-green-700 text-2xl">2</span>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-l-4 border-amber-500 cursor-pointer hover:shadow-lg transition-all transform hover:scale-102" onclick="filterByCategory('ES_EUC_Express')">
+                                <span class="font-semibold text-gray-700 text-sm">ES_EUC_Express</span>
+                                <span class="font-bold text-amber-700 text-2xl">1</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SLA Summary -->
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <span class="text-2xl">⏱️</span> SLA Summary
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-l-4 border-green-600 shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-3xl">✅</span>
+                                    <span class="font-semibold text-gray-700">Within SLA</span>
+                                </div>
+                                <span class="text-4xl font-black text-green-700">5</span>
+                            </div>
+                            <div class="flex items-center justify-between p-5 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-l-4 border-amber-600 shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-3xl">⚠️</span>
+                                    <span class="font-semibold text-gray-700">Due Soon</span>
+                                </div>
+                                <span class="text-4xl font-black text-amber-700">4</span>
+                            </div>
+                            <div class="flex items-center justify-between p-5 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border-l-4 border-red-600 shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-3xl">🚨</span>
+                                    <span class="font-semibold text-gray-700">Overdue</span>
+                                </div>
+                                <span class="text-4xl font-black text-red-700">1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Username Modal -->
+    <div id="usernameModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm">
+        <div class="glass-effect rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">🔐 Enter Your Username</h3>
+            <p class="text-gray-600 mb-6">Please enter your RightAnswers username to edit articles in Solution Manager.</p>
+            <div class="mb-6">
+                <label class="font-semibold text-gray-700 text-sm mb-2 block">Username</label>
+                <input type="text" id="usernameInput" placeholder="e.g., pram1" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-indigo-500 focus:outline-none">
+            </div>
+            <div class="flex gap-4">
+                <button onclick="saveUsername()" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                    ✅ Save & Continue
+                </button>
+                <button onclick="cancelUsername()" class="flex-1 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                    ❌ Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const articles = [
+            {
+                id: '251217160128023',
+                title: 'Unable to sign into Octopus',
+                category: 'ES_EUC_PC_Support',
+                owner: 'ES_EUC_PC_Support',
+                flaggedDate: '2026-07-02',
+                daysOld: 4,
+                priority: 'high',
+                slaStatus: 'SLA BREACH',
+                flaggedBy: 'Live Flagged Article',
+                comment: 'After restart also not working',
+                reasons: ['Application Access Issue', 'Login Issue', 'Needs Review'],
+                status: 'pending'
+            },
+            {
+                id: '180910111606547',
+                title: 'How to contact Corporate Payroll for Paychex Employees',
+                category: 'ES_EUC_PC_Support',
+                owner: 'ES_EUC_PC_Support',
+                flaggedDate: '2026-06-23',
+                daysOld: 1,
+                priority: 'low',
+                slaStatus: 'WITHIN SLA',
+                flaggedBy: 'Knowledge Reviewer',
+                comment: 'Article was updated because the previous payroll contact process was no longer accurate.',
+                reasons: ['Process Change', 'Outdated Contact Method', 'Resolved'],
+                status: 'reviewed'
+            },
+            {
+                id: '180727153120168',
+                title: 'UC SME - Set Zero Out',
+                category: 'ES_EUC_UC',
+                owner: 'ES_EUC_UC',
+                flaggedDate: '2026-06-24',
+                daysOld: 2,
+                priority: 'medium',
+                slaStatus: 'DUE SOON',
+                flaggedBy: 'Knowledge Reviewer',
+                comment: 'The zero-out reference link no longer existed and needed to be updated.',
+                reasons: ['Broken Link', 'UC Process Update', 'Resolved'],
+                status: 'reviewed'
+            },
+            {
+                id: '250122172333267',
+                title: 'Submit RequestIT to Add/Remove Aspera Access',
+                category: 'ES_EUC_Express',
+                owner: 'ES_EUC_Express',
+                flaggedDate: '2026-06-25',
+                daysOld: 1,
+                priority: 'low',
+                slaStatus: 'WITHIN SLA',
+                flaggedBy: 'Knowledge Reviewer',
+                comment: 'Clarification was needed on whether Aspera access is department restricted.',
+                reasons: ['Clarification Needed', 'Access Request Process', 'Resolved'],
+                status: 'reviewed'
+            },
+            {
+                id: '250120131008277',
+                title: 'Microphone on Plantronics Blackwire headset not working',
+                category: 'ES_EUC_PC_Support',
+                owner: 'ES_EUC_PC_Support',
+                flaggedDate: '2026-06-24',
+                daysOld: 2,
+                priority: 'medium',
+                slaStatus: 'DUE SOON',
+                flaggedBy: 'Knowledge Reviewer',
+                comment: 'Article was missing clarity around the headset control block.',
+                reasons: ['Missing Steps', 'Hardware Support', 'Resolved'],
+                status: 'reviewed'
+            },
+            {
+                id: '161207095718711',
+                title: 'Install TimeTrade Outlook Connector Add-in',
+                category: 'ES_EUC_PC_Support',
+                owner: 'ES_EUC_PC_Support',
+                flaggedDate: '2026-06-23',
+                daysOld: 1,
+                priority: 'low',
+                slaStatus: 'WITHIN SLA',
+                flaggedBy: 'Knowledge Reviewer',
+                comment: 'Article needed review because TimeTrade does not work with the newer Outlook experience.',
+                reasons: ['Outlook Compatibility', 'Application Add-in', 'Resolved'],
+                status: 'reviewed'
+            },
+            {
+                id: '181107170940043',
+                title: 'How to submit a DO NOT CALL / EMAIL request for a client?',
+                category: 'ES_EUC_Corporate_Apps',
+                owner: 'ES_EUC_Corporate_Apps',
+                flaggedDate: '2026-06-25',
+                daysOld: 1,
+                priority: 'low',
+                slaStatus: 'WITHIN SLA',
+                flaggedBy: 'Knowledge Reviewer',
+                comment: 'Clarification was added that DNC/DNE requests can be submitted in SWM Workflow.',
+                reasons: ['Process Clarification', 'Client Request Workflow', 'Resolved'],
+                status: 'reviewed'
+            },
+            {
+                id: '250416171035863',
+                title: 'How do Paycor employees reset their Paycor password',
+                category: 'ES_EUC_PC_Support',
+                owner: 'ES_EUC_PC_Support',
+                flaggedDate: '2026-06-18',
+                daysOld: 3,
+                priority: 'medium',
+                slaStatus: 'DUE SOON',
+                flaggedBy: 'Knowledge Reviewer',
+                comment: 'Article was flagged because password reset instructions needed to be clearer.',
+                reasons: ['Password Reset', 'Instruction Update', 'Resolved'],
+                status: 'reviewed'
+            },
+            {
+                id: '181204074807919',
+                title: 'UC SME - Not receiving UC Voicemails to Outlook',
+                category: 'ES_EUC_UC',
+                owner: 'ES_EUC_UC',
+                flaggedDate: '2026-06-26',
+                daysOld: 1,
+                priority: 'low',
+                slaStatus: 'WITHIN SLA',
+                flaggedBy: 'Knowledge Reviewer',
+                comment: 'User asked how to prevent voicemail transcript emails from going to Junk.',
+                reasons: ['Outlook Mail', 'Voicemail Issue', 'Resolved'],
+                status: 'reviewed'
+            },
+            {
+                id: '040826211023524',
+                title: 'How to Update your Contact Information in Self Service/Blue Pages',
+                category: 'ES_EUC_Corporate_Apps',
+                owner: 'ES_EUC_Corporate_Apps',
+                flaggedDate: '2026-06-24',
+                daysOld: 2,
+                priority: 'medium',
+                slaStatus: 'DUE SOON',
+                flaggedBy: 'Knowledge Reviewer',
+                comment: 'Article needed updates for the new Paycor Internal HCM system.',
+                reasons: ['Process Update', 'Paycor HCM', 'Resolved'],
+                status: 'reviewed'
+            }
+        ];
+
+        let selectedArticle = null;
+        let currentUsername = sessionStorage.getItem('rightAnswersUsername') || null;
+        let isArticlesListExpanded = false;
+        let currentFilter = 'all';
+
+        function toggleArticlesList() {
+            const accordion = document.getElementById('articlesAccordion');
+            const chevron = document.getElementById('articlesChevron');
+            isArticlesListExpanded = !isArticlesListExpanded;
+            
+            if (isArticlesListExpanded) {
+                accordion.classList.add('active');
+                chevron.classList.add('rotate-180');
+            } else {
+                accordion.classList.remove('active');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+
+        function getPriorityColor(priority) {
+            const colors = {
+                high: 'from-red-500 to-red-600',
+                medium: 'from-amber-500 to-amber-600',
+                low: 'from-blue-500 to-blue-600'
+            };
+            return colors[priority] || 'from-gray-500 to-gray-600';
+        }
+
+        function getSLAColor(status) {
+            const colors = {
+                'SLA BREACH': 'bg-gradient-to-r from-red-50 to-red-100 border-red-600 text-red-900',
+                'DUE SOON': 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-600 text-amber-900',
+                'WITHIN SLA': 'bg-gradient-to-r from-green-50 to-green-100 border-green-600 text-green-900'
+            };
+            return colors[status] || 'bg-gray-100 border-gray-600 text-gray-900';
+        }
+
+        function getSLAIcon(status) {
+            const icons = {
+                'SLA BREACH': '🚨',
+                'DUE SOON': '⚠️',
+                'WITHIN SLA': '✅'
+            };
+            return icons[status] || '';
+        }
+
+        function showUsernameModal() {
+            const modal = document.getElementById('usernameModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('usernameInput').focus();
+        }
+
+        function hideUsernameModal() {
+            const modal = document.getElementById('usernameModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveUsername() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                alert('Please enter a valid username');
+                return;
+            }
+            currentUsername = username;
+            sessionStorage.setItem('rightAnswersUsername', username);
+            hideUsernameModal();
+            proceedToEditArticle();
+        }
+
+        function cancelUsername() {
+            hideUsernameModal();
+        }
+
+        function proceedToEditArticle() {
+            if (!selectedArticle || !currentUsername) return;
+            const editorUrl = `https://paychex.rightanswers.com/solutionmanager/controller/addtokb/?adddoc=false&solutionType=&longSolution=&summary=&title=&problem=&symptoms=&symtoms=&details=&keywords=&companyCode=paychex&solutionID=${selectedArticle.id}&username=${currentUsername}&fullname=${currentUsername}&author=${currentUsername}&view=&action=&aiaddtokb=&workgroup=n%2Fa&interface=sm`;
+            window.open(editorUrl, '_blank');
+        }
+
+        function renderArticles(articlesToRender) {
+            const container = document.getElementById('articlesColumn');
+            const countElement = document.getElementById('articlesCount');
+            countElement.textContent = `Showing ${articlesToRender.length} article${articlesToRender.length !== 1 ? 's' : ''}`;
+            
+            if (articlesToRender.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full glass-effect rounded-2xl p-12 text-center shadow-lg">
+                        <div class="text-7xl mb-4">🔍</div>
+                        <p class="text-gray-600 mb-4 text-lg">No articles match your filter criteria</p>
+                        <button onclick="clearFilters()" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg font-semibold">Clear Filters</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = articlesToRender.map(article => `
+                <div class="glass-effect rounded-2xl p-6 shadow-md cursor-pointer transition-all hover:shadow-2xl border-4 ${selectedArticle?.id === article.id ? 'border-indigo-500 shadow-indigo-200' : 'border-transparent'}" 
+                     onclick="selectArticle('${article.id}')">
+                    <div class="flex justify-between items-start gap-4 mb-4">
+                        <div class="flex-1 font-bold text-gray-800 text-lg">${article.title}</div>
+                        <div class="bg-gradient-to-r ${getPriorityColor(article.priority)} text-white px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap shadow-lg">
+                            ${article.daysOld} DAY${article.daysOld > 1 ? 'S' : ''}
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-4 text-sm text-gray-600">
+                        <div><span class="font-semibold">ID:</span> ${article.id}</div>
+                        <div><span class="font-semibold">Category:</span> ${article.category}</div>
+                        <div><span class="font-semibold">Owner:</span> ${article.owner}</div>
+                        <div><span class="font-semibold">Flagged:</span> ${article.flaggedDate}</div>
+                    </div>
+                    <div class="${getSLAColor(article.slaStatus)} border-l-4 p-3 rounded-xl mb-4 font-bold text-center text-sm shadow-sm">
+                        ${getSLAIcon(article.slaStatus)} ${article.slaStatus}
+                    </div>
+                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-400 p-4 rounded-xl mb-4 shadow-sm">
+                        <div class="font-semibold text-amber-900 mb-2 text-sm">💬 Flagged by ${article.flaggedBy}</div>
+                        <div class="text-amber-800 text-sm">${article.comment}</div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        ${article.reasons.map(reason => `<span class="bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-900 px-3 py-1 rounded-full text-xs font-medium shadow-sm">🏷️ ${reason}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            if (!isArticlesListExpanded) {
+                toggleArticlesList();
+            }
+        }
+
+        function selectArticle(articleId) {
+            selectedArticle = articles.find(a => a.id === articleId);
+            renderArticles(getFilteredArticles());
+            renderArticleDetails();
+        }
+
+        function renderArticleDetails() {
+            const container = document.getElementById('articleDetails');
+            
+            if (!selectedArticle) {
+                container.innerHTML = `
+                    <div class="text-center py-16">
+                        <div class="text-7xl mb-4">👈</div>
+                        <p class="text-gray-600 text-lg">Select an article from the list to view details</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <div class="font-semibold text-gray-700 text-sm mb-1">Article ID</div>
+                        <div class="text-gray-800 font-mono">${selectedArticle.id}</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-700 text-sm mb-1">Title</div>
+                        <div class="text-gray-800 font-semibold">${selectedArticle.title}</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-700 text-sm mb-1">Category</div>
+                        <div class="text-gray-800">${selectedArticle.category}</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-700 text-sm mb-1">Owner</div>
+                        <div class="text-gray-800">${selectedArticle.owner}</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-700 text-sm mb-1">Flagged Date</div>
+                        <div class="text-gray-800">${selectedArticle.flaggedDate} (${selectedArticle.daysOld} days ago)</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-700 text-sm mb-1">SLA Status</div>
+                        <div class="${getSLAColor(selectedArticle.slaStatus)} border-l-4 p-3 rounded-xl font-bold text-center shadow-sm">
+                            ${selectedArticle.slaStatus}
+                        </div>
+                    </div>
+                    <div class="flex gap-4 pt-4">
+                        <button onclick="viewArticle()" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-xl transition-all">
+                            👁️ View Article
+                        </button>
+                        <button onclick="editArticle()" class="flex-1 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                            ✏️ Edit Article
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getFilteredArticles() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const priority = document.getElementById('priorityFilter').value;
+            const date = document.getElementById('dateFilter').value;
+
+            let filtered = articles.filter(article => {
+                const matchesSearch = !searchTerm || 
+                    article.title.toLowerCase().includes(searchTerm) || 
+                    article.id.toLowerCase().includes(searchTerm);
+                const matchesCategory = !category || article.category === category;
+                const matchesPriority = !priority || article.priority === priority;
+                const matchesDate = !date || article.flaggedDate === date;
+                return matchesSearch && matchesCategory && matchesPriority && matchesDate;
+            });
+
+            if (currentFilter === 'pending') {
+                filtered = filtered.filter(a => a.status === 'pending');
+            } else if (currentFilter === 'reviewed') {
+                filtered = filtered.filter(a => a.status === 'reviewed');
+            } else if (currentFilter === 'high') {
+                filtered = filtered.filter(a => a.priority === 'high');
+            }
+
+            return filtered;
+        }
+
+        function applyFilters() {
+            const filtered = getFilteredArticles();
+            renderArticles(filtered);
+            if (selectedArticle && !filtered.find(a => a.id === selectedArticle.id)) {
+                selectedArticle = null;
+                renderArticleDetails();
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('priorityFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            selectedArticle = null;
+            currentFilter = 'all';
+            renderArticles(articles);
+            renderArticleDetails();
+        }
+
+        function showAllArticles() {
+            currentFilter = 'all';
+            clearFilters();
+        }
+
+        function filterPendingReview() {
+            currentFilter = 'pending';
+            clearFilters();
+            const filtered = articles.filter(a => a.status === 'pending');
+            renderArticles(filtered);
+        }
+
+        function filterHighPriority() {
+            currentFilter = 'high';
+            document.getElementById('priorityFilter').value = 'high';
+            applyFilters();
+        }
+
+        function filterReviewed() {
+            currentFilter = 'reviewed';
+            clearFilters();
+            const filtered = articles.filter(a => a.status === 'reviewed');
+            renderArticles(filtered);
+        }
+
+        function filterByCategory(category) {
+            currentFilter = 'all';
+            document.getElementById('categoryFilter').value = category;
+            applyFilters();
+        }
+
+        function viewArticle() {
+            if (!selectedArticle) return;
+            const portalUrl = `https://paychex.rightanswers.com/portal/app/portlets/results/viewsolution.jsp?solutionid=${selectedArticle.id}&page=1&position=0&q=${selectedArticle.id}&ticketid=`;
+            window.open(portalUrl, '_blank');
+        }
+
+        function editArticle() {
+            if (!selectedArticle) return;
+            if (!currentUsername) {
+                showUsernameModal();
+                return;
+            }
+            proceedToEditArticle();
+        }
+
+        // Add event listeners for real-time filtering
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+            document.getElementById('priorityFilter').addEventListener('change', applyFilters);
+            document.getElementById('dateFilter').addEventListener('change', applyFilters);
+
+            // Initialize the dashboard
+            renderArticles(articles);
+            renderArticleDetails();
+        });
+    </script>
+</body>
+</html>
